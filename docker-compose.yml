@@ -1,0 +1,69 @@
+
+version: "3.7"
+services:
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: exam-iot-2024-mqtt-server
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./config:/mosquitto/config:rw
+      - ./data:/mosquitto/data:rw
+      - ./log:/mosquitto/log:rw
+    restart: unless-stopped
+    networks:
+      custom_net:
+        ipv4_address: 10.5.0.5
+
+  thedatabase:
+    image: mariadb
+    container_name: exam-iot-2024-database
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: cand136
+      MYSQL_PASSWORD: cand136
+      MYSQL_DATABASE: iot
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db:/var/lib/mysql
+      - ./create-table-db.sql:/docker-entrypoint-initdb.d/1.sql
+    networks:
+      custom_net:
+        ipv4_address: 10.5.0.6
+
+  grafana:
+    image: grafana/grafana
+    container_name: exam-iot-2024-grafana
+    mem_limit: 2g
+    cpus: 1.0
+    environment:
+      - GF_SECURITY_ADMIN_USER=cand136
+      - GF_SECURITY_ADMIN_PASSWORD=cand136
+    ports:
+      - "3000:3000"
+    volumes:
+      - 'grafana_data:/var/lib/grafana'
+    networks:
+      custom_net:
+        ipv4_address: 10.5.0.7
+
+
+# volumes for mapping data,config and log
+volumes:
+  config:
+  data:
+  log:
+  db:
+  grafana_data: {}
+ # grafanadb:
+
+networks:
+  custom_net:
+    name:  exam-iot
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
